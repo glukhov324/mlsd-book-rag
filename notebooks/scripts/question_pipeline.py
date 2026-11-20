@@ -152,6 +152,8 @@ class QuestionRecord:
             "question": self.question,
             "answer": self.answer,
             "evidence": self.evidence,
+            "selected_text": "",
+            "is_spoiler": 0,
         }
 
 
