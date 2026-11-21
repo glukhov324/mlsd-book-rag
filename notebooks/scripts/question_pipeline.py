@@ -10,8 +10,8 @@ from .context_mode import ContextMode
 from .ollama_json import chat_json
 from .schemas import GENERATE_SCHEMA, VALIDATE_SCHEMA
 
-GENERATOR_MODEL = "gemma4:12b"
-VALIDATOR_MODEL = "qwen3.8:27b"
+GENERATOR_MODEL = "llama3.1:8b"
+VALIDATOR_MODEL = "gemma4:12b"
 
 ANSWER_WORDS_TARGET = (20, 30)
 ANSWER_WORDS_LO, ANSWER_WORDS_HI = 15, 35
@@ -154,7 +154,27 @@ class QuestionRecord:
             "evidence": self.evidence,
             "selected_text": "",
             "is_spoiler": 0,
+            "selection_anchor_chunk_id": "",
+            "reader_anchor_chunk_id": "",
+            "reading_progress_char": None,
+            "sel_start": None,
+            "sel_end": None,
         }
+
+
+def selection_offsets(chunk: Chunk, selected_text: str) -> tuple[int, int]:
+    """Границы выделения в координатах главы: те же, что `char_start`/`char_end` чанка."""
+    text = selected_text
+    if not text:
+        raise ValueError("empty selected_text")
+    local = chunk.text.find(text)
+    if local < 0:
+        raise ValueError(f"{chunk.chunk_id}: selected_text is not in the anchor chunk")
+    sel_start = chunk.char_start + local
+    sel_end = sel_start + len(text)
+    if sel_end > chunk.char_end:
+        raise ValueError(f"{chunk.chunk_id}: sel_end past chunk.char_end")
+    return sel_start, sel_end
 
 
 def source_from_chunks(
